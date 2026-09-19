@@ -22,7 +22,7 @@ defaults:
     shell: bash
 
 env:
-  SITE_BASE_URL: https://jankov84.github.io/jan-kovar-site/
+  SITE_BASE_URL: https://jan-kovar.eu/
   HUGO_VERSION: '0.162.0'
   PNPM_VERSION: '10.14.0'
   NODE_VERSION: '24'

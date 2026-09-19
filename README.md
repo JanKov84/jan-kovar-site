@@ -111,10 +111,10 @@ The `data/verified-*-links*.json` files preserve verified public links across a 
 
 ## Prepared GitHub Pages deployment
 
-The default production target is **https://jankov84.github.io/jan-kovar-site/**, configured in `config/production/hugo.yaml`. The development server remains at localhost. A project-site production build includes `/jan-kovar-site/` in navigation, assets, CV downloads, canonicals, and sitemap URLs. The checker validates both path prefixes and case-sensitive asset filenames, even on Windows.
+The production target is **https://jan-kovar.eu/**, configured in `config/production/hugo.yaml`. The development server remains at localhost. A custom-domain production build uses root-relative navigation, assets, CV downloads, canonicals, and sitemap URLs. The checker validates the canonical origin and case-sensitive asset filenames, even on Windows.
 
 `.github/workflows/pages.yml` uses manual `workflow_dispatch` only. Its `deploy` input defaults to **false**: a normal manual run builds, validates, and uploads a build artifact without publishing. The separate deployment job runs only with `deploy: true`, and its Pages configuration step has `enablement: false`; it cannot turn Pages on. Actions are pinned to verified full commit SHAs; Hugo 0.162.0, pnpm 10.14.0, and Go 1.27.1 are pinned, with Node.js 24.
 
 After explicit approval, the repository must receive its initial source commit on `main`, GitHub Pages must be configured to use GitHub Actions, and the workflow must be invoked with deployment selected. For an additional approval checkpoint, configure required reviewers on the `github-pages` environment. None of those remote actions has been performed. The workflow itself has been syntax-reviewed but cannot be execution-tested without uploading it to GitHub.
 
-The workflow packages only `public/`; private build inputs, tools, caches, and audit evidence are excluded. There is no custom domain or `CNAME`. Changing the hosting URL later requires updating both the production `baseURL` and workflow `SITE_BASE_URL`, followed by the same build/link checks.
+The workflow packages only `public/`; private build inputs, tools, caches, and audit evidence are excluded. The verified custom domain is carried by `static/CNAME`. Changing the hosting URL later requires updating the production `baseURL`, workflow `SITE_BASE_URL`, and `static/CNAME`, followed by the same build/link checks.
