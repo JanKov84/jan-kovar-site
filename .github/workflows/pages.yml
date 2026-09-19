@@ -35,9 +35,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      GOPATH: ${{ github.workspace }}/.cache/go
-      GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
-      GOCACHE: ${{ github.workspace }}/.cache/go-build
+      HUGO_CACHEDIR: /tmp/hugo_cache_runner
       GOTOOLCHAIN: local
     steps:
       - name: Check out public site source
@@ -90,7 +88,7 @@ jobs:
           go mod download all
 
       - name: Build for the project URL
-        run: node scripts/hugo.mjs --minify --environment production --baseURL "$SITE_BASE_URL"
+        run: .tools/hugo/hugo --minify --environment production --baseURL "$SITE_BASE_URL"
 
       - name: Check content, privacy, metadata and local links
         run: node scripts/check-site.mjs public "$SITE_BASE_URL"
