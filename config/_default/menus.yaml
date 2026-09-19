@@ -33,6 +33,9 @@ footer:
   - name: ORCID
     url: https://orcid.org/0000-0002-5267-2090
     weight: 40
+  - name: ResearchGate
+    url: https://www.researchgate.net/profile/Jan-Kovar
+    weight: 50
   - name: GitHub
     url: https://github.com/JanKov84
-    weight: 50
+    weight: 60
