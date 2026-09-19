@@ -1,0 +1,38 @@
+main:
+  - name: Home
+    pageRef: /
+    weight: 10
+  - name: Research
+    pageRef: /research/
+    weight: 20
+  - name: Publications
+    pageRef: /publications/
+    weight: 30
+  - name: Projects
+    pageRef: /projects/
+    weight: 40
+  - name: Teaching
+    pageRef: /teaching/
+    weight: 50
+  - name: CV
+    pageRef: /cv/
+    weight: 60
+  - name: Contact
+    pageRef: /contact/
+    weight: 70
+footer:
+  - name: IIR
+    url: https://www.iir.cz/jan-kovar
+    weight: 10
+  - name: UNYP
+    url: https://www.unyp.cz/academic-staff/jan-kovar/
+    weight: 20
+  - name: Google Scholar
+    url: https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=cs
+    weight: 30
+  - name: ORCID
+    url: https://orcid.org/0000-0002-5267-2090
+    weight: 40
+  - name: GitHub
+    url: https://github.com/JanKov84
+    weight: 50

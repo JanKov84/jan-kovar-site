@@ -1,0 +1,3 @@
+# Project-site target prepared for review; local Hugo server uses the default localhost URL.
+baseURL: https://jankov84.github.io/jan-kovar-site/
+enableRobotsTXT: true

@@ -1,0 +1,39 @@
+{{ define "main" }}
+<div class="publication-page site-width">
+  <header class="page-intro">
+    <h1>{{ .Title }}</h1>
+    <div class="prose">{{ .Content }}</div>
+  </header>
+  <form class="publication-filters" id="publication-filters" hidden aria-label="Filter publications">
+    <div>
+      <label for="publication-type">Publication type</label>
+      <select id="publication-type" name="type">
+        <option value="">All types</option>
+        {{ range slice "Journal Articles" "Books" "Book Chapters" "Other Research and Policy Publications" "Book Reviews" }}
+        <option value="{{ . }}">{{ . }}</option>
+        {{ end }}
+      </select>
+    </div>
+    <div>
+      <label for="research-area">Research area</label>
+      <select id="research-area" name="area">
+        <option value="">All research areas</option>
+        {{ range hugo.Data.research_areas }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+      </select>
+    </div>
+    <button type="reset">Reset filters</button>
+  </form>
+  <p id="publication-count" class="result-count" role="status" aria-live="polite">{{ len .RegularPages }} publications · newest first</p>
+  <div class="publication-results">
+    {{ range .RegularPages.ByDate.Reverse }}
+    <article class="publication-result" data-category="{{ index .Params.categories 0 }}" data-areas="{{ delimit .Params.tags "|" }}">
+      <p class="publication-kind">{{ index .Params.categories 0 }}{{ if eq .Params.status "online_first" }} · Online first{{ end }}</p>
+      {{ partial "views/citation.html" (dict "item" . "page" $) }}
+    </article>
+    {{ end }}
+  </div>
+  <p id="publication-empty" hidden>No publications match both filters. Try another combination or reset the filters.</p>
+</div>
+{{ $filters := resources.Get "js/publication-filters.js" | minify | fingerprint }}
+<script src="{{ $filters.RelPermalink }}" integrity="{{ $filters.Data.Integrity }}" defer></script>
+{{ end }}

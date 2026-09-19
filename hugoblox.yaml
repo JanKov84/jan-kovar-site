@@ -1,0 +1,8 @@
+build:
+  hugo_version: '0.162.0'
+deploy:
+  host: none
+template:
+  id: academic-cv
+  name: Academic CV
+  revision: 3aacb2ac2c3f6aeaecac4febe915c2fb30122903

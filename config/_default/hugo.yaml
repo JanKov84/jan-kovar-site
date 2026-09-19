@@ -1,0 +1,44 @@
+title: Jan Kovář
+baseURL: http://localhost:1313/
+defaultContentLanguage: en
+defaultContentLanguageInSubdir: false
+removePathAccents: true
+enableGitInfo: false
+enableRobotsTXT: false
+disableAliases: true
+disableKinds: [RSS]
+summaryLength: 30
+pagination:
+  pagerSize: 60
+build:
+  writeStats: true
+outputs:
+  home: [HTML]
+  section: [HTML]
+  taxonomy: [HTML]
+  term: [HTML]
+taxonomies:
+  tag: tags
+  publication_type: publication_types
+  category: categories
+cascade:
+  - params:
+      toc: false
+      reading_time: false
+      share: false
+      commentable: false
+      editable: false
+      show_date: false
+      show_date_updated: false
+      show_reading_time: false
+ignoreFiles:
+  - '(^|/)_build_sources(/|$)'
+  - '(^|/)\\.tools(/|$)'
+markup:
+  _merge: deep
+  goldmark:
+    renderer:
+      unsafe: true
+security:
+  _merge: deep
+timeout: 120s

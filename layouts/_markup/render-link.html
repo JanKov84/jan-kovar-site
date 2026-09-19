@@ -1,0 +1,6 @@
+{{- /* Preserve the Blox link presentation while supporting a project-site base path. */ -}}
+{{- $destination := .Destination -}}
+{{- if and (strings.HasPrefix $destination "/") (not (strings.HasPrefix $destination "//")) -}}
+  {{- $destination = strings.TrimPrefix "/" $destination | relURL -}}
+{{- end -}}
+<a href="{{ $destination | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if strings.HasPrefix $destination "http" }} target="_blank" rel="noopener"{{ end }}>{{ .Text | safeHTML }}</a>

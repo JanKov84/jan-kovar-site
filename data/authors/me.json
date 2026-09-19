@@ -1,0 +1,39 @@
+{
+  "schema": "hugoblox/author/v1",
+  "slug": "me",
+  "is_owner": true,
+  "name": {
+    "display": "Jan Kovář",
+    "given": "Jan",
+    "family": "Kovář"
+  },
+  "role": "Research Director; Associate Professor",
+  "bio": "I am a political scientist and Research Director at the Institute of International Relations Prague. My research examines European integration and EU governance, political parties and elections, politicisation, migration, and political communication, with particular attention to Central and Eastern Europe. A recurring theme in my work is how European and other politically contested issues interact with domestic political competition and are represented in political and media discourse. My research draws primarily on quantitative methods, complemented by qualitative approaches to political discourse and framing. I also teach European politics and international relations at the University of New York in Prague.",
+  "affiliations": [
+    {
+      "name": "Institute of International Relations Prague",
+      "url": "https://www.iir.cz/jan-kovar"
+    },
+    {
+      "name": "University of New York in Prague",
+      "url": "https://www.unyp.cz/academic-staff/jan-kovar/"
+    }
+  ],
+  "links": [
+    {
+      "icon": "academicons/google-scholar",
+      "url": "https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=cs",
+      "label": "Google Scholar"
+    },
+    {
+      "icon": "academicons/orcid",
+      "url": "https://orcid.org/0000-0002-5267-2090",
+      "label": "ORCID"
+    }
+  ],
+  "interests": [
+    "European Integration and EU Governance",
+    "Parties, Elections and Politicisation",
+    "Migration, Framing and Political Communication"
+  ]
+}

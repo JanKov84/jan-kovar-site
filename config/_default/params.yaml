@@ -1,0 +1,58 @@
+hugoblox:
+  schema: '2.0'
+  identity:
+    name: Jan Kovář
+    type: person
+    description: 'Political scientist researching European integration, EU governance, political parties, migration, and political communication.'
+  theme:
+    mode: light
+    pack: default
+    colors:
+      primary: '#245c52'
+    surfaces:
+      background: '#faf9f6'
+      foreground: '#242c2a'
+  typography:
+    pack: academic
+  layout:
+    radius: none
+    spacing: comfortable
+  header:
+    enable: true
+    style: navbar
+    sticky: false
+    align: right
+    search: false
+    theme_toggle: false
+    theme_picker: false
+    language_switcher: false
+    cta:
+      enable: false
+  footer:
+    style: minimal
+    language_switcher: false
+    text: ''
+  copyright:
+    notice: '© {year} Jan Kovář'
+  content:
+    math:
+      enable: false
+    toc:
+      enable: false
+    reading_time:
+      enable: false
+    citations:
+      style: apa
+  search:
+    enable: false
+  comments:
+    enable: false
+  repository:
+    enable: false
+  locale:
+    date_format: '2006'
+  privacy:
+    enable: false
+  debug:
+    enable: false
+    export_logs: false

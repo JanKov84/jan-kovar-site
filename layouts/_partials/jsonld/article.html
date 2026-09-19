@@ -1,0 +1,68 @@
+{{- $page := .page }}
+{{ $summary := .summary }}
+{{ $featured_image := partial "functions/get_featured_image" $page }}
+
+{{/* Get schema type. */}}
+{{ $schema := "Article" }}
+{{ if eq $page.Type "blog" }}
+  {{ $schema = "BlogPosting" }}
+{{ else if eq $page.Type "publications" }}
+  {{ $schema = "CreativeWork" }}
+  {{ if in $page.Params.publication_types "article-journal" }}
+    {{ $schema = "ScholarlyArticle" }}
+  {{ else if in $page.Params.publication_types "book" }}
+    {{ $schema = "Book" }}
+  {{ end }}
+  {{/* An absent abstract must not become the site owner's biography. */}}
+  {{ $summary = $page.Params.abstract | default $page.Params.summary | default $page.Params.description }}
+{{ end }}
+
+{{/* Preserve every supplied author and the original spelling of their name. */}}
+{{ $authors := slice }}
+{{ range $page.Params.authors }}
+  {{ $profile := partial "functions/get_author_profile" . }}
+  {{ $authors = $authors | append (dict "@type" "Person" "name" $profile.title) }}
+{{ end }}
+{{ $publisher := "" }}
+{{ if reflect.IsMap $page.Params.publication }}
+  {{ $publisher = $page.Params.publication.publisher | default "" }}
+{{ end }}
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": {{$schema}},
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": {{$page.Permalink}}
+  },
+  "headline": {{$page.Title}},
+  {{ if $featured_image }}
+  "image": [
+    {{$featured_image.Permalink}}
+  ],
+  {{end}}
+  {{/* Never expose the technical January 1 sort date as verified metadata. */}}
+  {{ if ne $page.Params.date_precision "year" }}
+    {{ if not $page.PublishDate.IsZero }}
+  "datePublished": {{ $page.PublishDate.Format "2006-01-02T15:04:05Z07:00" }},
+    {{ end }}
+    {{ if not $page.Lastmod.IsZero }}
+  "dateModified": {{ $page.Lastmod.Format "2006-01-02T15:04:05Z07:00" }},
+    {{ end }}
+  {{ end }}
+  {{ with $authors }}
+  "author": {{ . | jsonify | safeJS }},
+  {{ end }}
+  {{ with $publisher }}
+  "publisher": {
+    "@type": "Organization",
+    "name": {{ . }}
+  },
+  {{ end }}
+  {{ with $summary }}
+  "description": {{ . | plainify }},
+  {{ end }}
+  "url": {{ $page.Permalink }}
+}
+</script>
