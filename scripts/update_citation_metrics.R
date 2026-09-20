@@ -18,8 +18,6 @@ output_path <- Sys.getenv("CITATION_METRICS_OUTPUT", unset = "citation-metrics.j
 
 today <- format(Sys.Date(), "%Y-%m-%d")
 
-`%||%` <- function(left, right) if (is.null(left)) right else left
-
 parse_count <- function(value) {
   value <- gsub("[^0-9]", "", as.character(value))
   if (!nzchar(value)) return(NA_real_)
@@ -36,20 +34,16 @@ h_index <- function(citations) {
 fetch_scholar <- function() {
   message("Fetching Google Scholar metrics...")
   result <- tryCatch({
-    session <- rvest::session(
-      scholar_url,
-      user_agent = "Mozilla/5.0 (compatible; academic citation metrics test)"
+    options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+    page <- tryCatch(
+      rvest::read_html(scholar_url),
+      error = function(error) stop("Google Scholar HTTP request failed: ", conditionMessage(error))
     )
-    status <- session$response$status_code %||% 200L
-    if (!identical(as.integer(status), 200L)) {
-      stop(sprintf("Google Scholar returned HTTP status %s.", status))
-    }
-    page <- rvest::read_html(session)
     text <- paste(rvest::html_text2(page), collapse = " ")
     if (grepl("captcha|unusual traffic|not a robot|sorry", text, ignore.case = TRUE)) {
       stop("Google Scholar returned a bot-check or CAPTCHA page.")
     }
-    stats <- rvest::html_elements(page, css = "#gsc_rsb_st .gsc_rsb_std")
+    stats <- rvest::html_elements(page, css = ".gsc_rsb_std")
     values <- rvest::html_text2(stats)
     if (length(values) < 2L) {
       stop("Google Scholar statistics selectors were not found.")
