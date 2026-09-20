@@ -31,7 +31,17 @@
   ],
   "featured": false,
   "status": "published",
-  "publication_language": "en"
+  "publication_language": "en",
+  "hugoblox": {
+    "ids": {
+      "doi": "10.5281/zenodo.18760980"
+    }
+  },
+  "links": [
+    {
+      "type": "source",
+      "label": "Publisher",
+      "url": "https://zenodo.org/records/18760980"
+    }
+  ]
 }
-
-
