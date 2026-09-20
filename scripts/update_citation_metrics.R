@@ -35,10 +35,25 @@ fetch_scholar <- function() {
   message("Fetching Google Scholar metrics...")
   result <- tryCatch({
     options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+    request_warnings <- character()
     page <- tryCatch(
-      rvest::read_html(scholar_url),
-      error = function(error) stop("Google Scholar HTTP request failed: ", conditionMessage(error))
+      withCallingHandlers(
+        rvest::read_html(scholar_url),
+        warning = function(warning) {
+          request_warnings <<- c(request_warnings, conditionMessage(warning))
+          invokeRestart("muffleWarning")
+        }
+      ),
+      error = function(error) {
+        if (length(request_warnings)) {
+          message("Google Scholar request warning: ", paste(unique(request_warnings), collapse = " | "))
+        }
+        stop("Google Scholar HTTP request failed: ", conditionMessage(error))
+      }
     )
+    if (length(request_warnings)) {
+      message("Google Scholar request warning: ", paste(unique(request_warnings), collapse = " | "))
+    }
     text <- paste(rvest::html_text2(page), collapse = " ")
     if (grepl("captcha|unusual traffic|not a robot|sorry", text, ignore.case = TRUE)) {
       stop("Google Scholar returned a bot-check or CAPTCHA page.")
