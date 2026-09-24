@@ -39,21 +39,14 @@ fetch_scholar <- function() {
   }
   message("Fetching Google Scholar metrics through ScraperAPI...")
   result <- tryCatch({
-    scraper_url <- paste0(
+    options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+    fetch_url <- paste0(
       "https://api.scraperapi.com?api_key=", utils::URLencode(key, reserved = TRUE),
       "&url=", utils::URLencode(scholar_url, reserved = TRUE)
     )
-    scraper_session <- tryCatch(
-      rvest::session(scraper_url),
-      error = function(error) stop("ScraperAPI request failed; no Scholar metrics were written.")
-    )
-    status <- scraper_session$response$status_code
-    if (!is.null(status) && !identical(as.integer(status), 200L)) {
-      stop(sprintf("ScraperAPI returned HTTP status %s.", status))
-    }
     page <- tryCatch(
-      rvest::read_html(scraper_session),
-      error = function(error) stop("ScraperAPI returned an unreadable response.")
+      rvest::read_html(fetch_url),
+      error = function(error) stop("ScraperAPI request failed; no Scholar metrics were written.")
     )
     text <- paste(rvest::html_text2(page), collapse = " ")
     if (grepl("captcha|unusual traffic|not a robot|sorry", text, ignore.case = TRUE)) {
