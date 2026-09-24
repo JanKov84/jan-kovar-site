@@ -26,23 +26,10 @@ jobs:
             any::jsonlite
             github::frbcesab/rwosstarter
 
-      - name: Probe Google Scholar HTTP response
-        run: |
-          set +e
-          diagnostics=$(curl --silent --show-error --output /dev/null \
-            --write-out 'http_code=%{http_code}\neffective_url=%{url_effective}\n' \
-            --user-agent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' \
-            'https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=en')
-          curl_exit=$?
-          printf '%s\n' "$diagnostics"
-          if [ "$curl_exit" -ne 0 ]; then
-            printf 'curl_exit_code=%s\n' "$curl_exit"
-          fi
-          exit 0
-
       - name: Fetch citation metrics
         env:
           WOS_STARTER_KEY: ${{ secrets.WOS_STARTER_KEY }}
+          SCRAPERAPI_KEY: ${{ secrets.SCRAPERAPI_KEY }}
           CITATION_METRICS_OUTPUT: ${{ runner.temp }}/citation-metrics.json
         run: Rscript scripts/update_citation_metrics.R
 

@@ -32,39 +32,40 @@ h_index <- function(citations) {
 }
 
 fetch_scholar <- function() {
-  message("Fetching Google Scholar metrics...")
+  key <- Sys.getenv("SCRAPERAPI_KEY", unset = "")
+  if (!nzchar(trimws(key))) {
+    message("Scholar fetch skipped: SCRAPERAPI_KEY is not set.")
+    return(NULL)
+  }
+  message("Fetching Google Scholar metrics through ScraperAPI...")
   result <- tryCatch({
-    options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-    request_warnings <- character()
-    page <- tryCatch(
-      withCallingHandlers(
-        rvest::read_html(scholar_url),
-        warning = function(warning) {
-          request_warnings <<- c(request_warnings, conditionMessage(warning))
-          invokeRestart("muffleWarning")
-        }
-      ),
-      error = function(error) {
-        if (length(request_warnings)) {
-          message("Google Scholar request warning: ", paste(unique(request_warnings), collapse = " | "))
-        }
-        stop("Google Scholar HTTP request failed: ", conditionMessage(error))
-      }
+    scraper_url <- paste0(
+      "https://api.scraperapi.com?api_key=", utils::URLencode(key, reserved = TRUE),
+      "&url=", utils::URLencode(scholar_url, reserved = TRUE)
     )
-    if (length(request_warnings)) {
-      message("Google Scholar request warning: ", paste(unique(request_warnings), collapse = " | "))
+    scraper_session <- tryCatch(
+      rvest::session(scraper_url),
+      error = function(error) stop("ScraperAPI request failed; no Scholar metrics were written.")
+    )
+    status <- scraper_session$response$status_code
+    if (!is.null(status) && !identical(as.integer(status), 200L)) {
+      stop(sprintf("ScraperAPI returned HTTP status %s.", status))
     }
+    page <- tryCatch(
+      rvest::read_html(scraper_session),
+      error = function(error) stop("ScraperAPI returned an unreadable response.")
+    )
     text <- paste(rvest::html_text2(page), collapse = " ")
     if (grepl("captcha|unusual traffic|not a robot|sorry", text, ignore.case = TRUE)) {
       stop("Google Scholar returned a bot-check or CAPTCHA page.")
     }
     stats <- rvest::html_elements(page, css = ".gsc_rsb_std")
     values <- rvest::html_text2(stats)
-    if (length(values) < 2L) {
+    if (length(values) < 3L) {
       stop("Google Scholar statistics selectors were not found.")
     }
     citations <- parse_count(values[[1L]])
-    h <- parse_count(values[[2L]])
+    h <- parse_count(values[[3L]])
     if (!is.finite(citations) || !is.finite(h)) {
       stop("Google Scholar statistics were present but not numeric.")
     }
