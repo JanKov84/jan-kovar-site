@@ -6,7 +6,7 @@
   </header>
   {{ $sources := slice
     (dict "name" "Google Scholar" "url" "https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=en" "data" hugo.Data.citations.scholar)
-    (dict "name" "Web of Science" "data" hugo.Data.citations.wos)
+    (dict "name" "Web of Science" "url" "https://www.webofscience.com/wos/author/record/AAJ-5694-2020" "data" hugo.Data.citations.wos)
   }}
   {{ $numberTypes := slice "int" "int8" "int16" "int32" "int64" "uint" "uint8" "uint16" "uint32" "uint64" "float32" "float64" "json.Number" }}
   {{ $metrics := slice }}
