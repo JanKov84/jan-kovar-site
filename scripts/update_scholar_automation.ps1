@@ -11,7 +11,7 @@ function Stop-WithCode {
         [Parameter(Mandatory = $true)][string]$Message
     )
 
-    [Console]::Error.WriteLine("ERROR {0}: {1}" -f $Code, $Message)
+    [Console]::Error.WriteLine('ERROR ' + $Code.ToString() + ': ' + $Message)
     exit $Code
 }
 
@@ -19,8 +19,9 @@ function Get-GitOutput {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
     try {
-        $lines = @(& git -C $repoRoot @Arguments 2>&1 | ForEach-Object { [string]$_ })
+        $output = @(& git -C $repoRoot @Arguments 2>&1)
         $code = $LASTEXITCODE
+        $lines = @($output | ForEach-Object { [string]$_ })
         return [pscustomobject]@{ ExitCode = $code; Lines = $lines }
     }
     catch {
