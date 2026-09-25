@@ -92,9 +92,10 @@ if ($null -eq $rscriptPath) {
 Write-Output "Using Rscript: $rscriptPath"
 
 Write-Output 'Synchronizing with origin/main using fast-forward only.'
-$pullResult = Get-GitOutput -Arguments @('pull', '--ff-only', 'origin', 'main')
-$pullResult.Lines | ForEach-Object { Write-Output $_ }
-if ($pullResult.ExitCode -ne 0) {
+$pullOutput = & git -C $repoRoot pull --ff-only origin main
+$pullExitCode = $LASTEXITCODE
+if ($pullOutput) { $pullOutput | ForEach-Object { Write-Output $_ } }
+if ($pullExitCode -ne 0) {
     Stop-WithCode 20 'git pull --ff-only origin main failed. No Scholar update was run.'
 }
 
@@ -139,9 +140,9 @@ if ($changedPaths.Count -eq 0) {
 }
 
 Write-Output 'Staging only data/citations/scholar.json.'
-$stageResult = Get-GitOutput -Arguments @('add', '--', $scholarPath)
-$stageResult.Lines | ForEach-Object { Write-Output $_ }
-if ($stageResult.ExitCode -ne 0) {
+$null = & git -C $repoRoot add -- $scholarPath
+$stageExitCode = $LASTEXITCODE
+if ($stageExitCode -ne 0) {
     Stop-WithCode 40 'Could not stage data/citations/scholar.json.'
 }
 
@@ -153,16 +154,18 @@ if ($stagedResult.ExitCode -ne 0 -or
 }
 
 Write-Output 'Committing Scholar metrics.'
-$commitResult = Get-GitOutput -Arguments @('commit', '-m', 'chore(citations): update Scholar metrics')
-$commitResult.Lines | ForEach-Object { Write-Output $_ }
-if ($commitResult.ExitCode -ne 0) {
+$commitOutput = & git -C $repoRoot commit -m 'chore(citations): update Scholar metrics'
+$commitExitCode = $LASTEXITCODE
+if ($commitOutput) { $commitOutput | ForEach-Object { Write-Output $_ } }
+if ($commitExitCode -ne 0) {
     Stop-WithCode 42 'Could not commit the Scholar metrics update.'
 }
 
 Write-Output 'Pushing the Scholar metrics commit to origin/main.'
-$pushResult = Get-GitOutput -Arguments @('push', 'origin', 'main')
-$pushResult.Lines | ForEach-Object { Write-Output $_ }
-if ($pushResult.ExitCode -ne 0) {
+$pushOutput = & git -C $repoRoot push origin main
+$pushExitCode = $LASTEXITCODE
+if ($pushOutput) { $pushOutput | ForEach-Object { Write-Output $_ } }
+if ($pushExitCode -ne 0) {
     Stop-WithCode 43 'Could not push the Scholar metrics commit to origin/main.'
 }
 
