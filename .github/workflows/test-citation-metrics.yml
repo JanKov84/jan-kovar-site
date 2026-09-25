@@ -1,17 +1,19 @@
-name: Test citation metrics
+name: Update WoS citation metrics
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  citation-metrics:
+  update-wos-citations:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
@@ -25,15 +27,42 @@ jobs:
             any::jsonlite
             github::frbcesab/rwosstarter
 
-      - name: Fetch citation metrics
+      - name: Update WoS citation data
         env:
           WOS_STARTER_KEY: ${{ secrets.WOS_STARTER_KEY }}
-          CITATION_METRICS_OUTPUT: ${{ runner.temp }}/citation-metrics.json
-        run: Rscript scripts/update_citation_metrics.R
+        run: Rscript scripts/update_wos_citations.R
 
-      - name: Upload citation metrics artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: citation-metrics-test
-          path: ${{ runner.temp }}/citation-metrics.json
-          if-no-files-found: error
+      - name: Commit changed WoS metrics
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='data/citations/wos.json'
+
+          if [[ ! -f "$target" ]]; then
+            echo "WoS updater did not produce $target." >&2
+            exit 1
+          fi
+
+          status="$(git status --porcelain=v1 --untracked-files=all)"
+          if [[ -z "$status" ]]; then
+            echo 'WoS metrics unchanged; nothing to commit.'
+            exit 0
+          fi
+
+          unexpected="$(printf '%s\n' "$status" | awk -v target="$target" 'substr($0, 4) != target { print substr($0, 4) }')"
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected repository changes; refusing to commit: $unexpected" >&2
+            exit 1
+          fi
+
+          git add -- "$target"
+          staged="$(git diff --cached --name-only)"
+          if [[ "$staged" != "$target" ]]; then
+            echo "Unexpected staged files; refusing to commit: $staged" >&2
+            exit 1
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(citations): update WoS metrics'
+          git push origin main
