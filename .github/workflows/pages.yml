@@ -1,6 +1,6 @@
 name: Verify site and optionally deploy
 
-# Adding this file does not build or publish on push.
+# Candidate citation pushes are checked against the full changed-file range before deployment.
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +9,16 @@ on:
         type: boolean
         required: true
         default: false
+  push:
+    branches: [main]
+    paths:
+      - data/citations/scholar.json
+      - data/citations/wos.json
+  # WoS uses GITHUB_TOKEN to push, which does not start a push-triggered workflow.
+  workflow_run:
+    workflows: [Update WoS citation metrics]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -32,8 +42,11 @@ env:
 jobs:
   build:
     name: Build and verify
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      citation_only: ${{ steps.citation_gate.outputs.citation_only }}
     env:
       HUGO_CACHEDIR: /tmp/hugo_cache_runner
       GOTOOLCHAIN: local
@@ -42,6 +55,64 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Verify automatic deployment changes only citation data
+        id: citation_gate
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_run' }}
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          WOS_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          WOS_RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WOS_RUN_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          AFTER: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == 'push' ]]; then
+            before="$PUSH_BEFORE"
+          elif [[ "$GITHUB_EVENT_NAME" == 'workflow_run' && "$WOS_RUN_BRANCH" == 'main' && "$WOS_RUN_REPOSITORY" == "$GITHUB_REPOSITORY" ]]; then
+            before="$WOS_RUN_HEAD_SHA"
+          else
+            echo 'Unexpected automatic-deployment event; refusing deployment.' >&2
+            exit 1
+          fi
+
+          if [[ ! "$before" =~ ^[0-9a-fA-F]{40}$ || "$before" =~ ^0{40}$ || ! "$AFTER" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo 'Missing or invalid comparison SHA; refusing deployment.' >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse --is-shallow-repository)" != 'false' || "$(git rev-parse HEAD)" != "$AFTER" ]]; then
+            echo 'Checkout does not contain the complete expected history; refusing deployment.' >&2
+            exit 1
+          fi
+          if ! git cat-file -e "${before}^{commit}" 2>/dev/null || ! git cat-file -e "${AFTER}^{commit}" 2>/dev/null || ! git merge-base --is-ancestor "$before" "$AFTER"; then
+            echo 'Pushed commit range cannot be verified; refusing deployment.' >&2
+            exit 1
+          fi
+
+          changed_paths="$(mktemp)"
+          trap 'rm -f "$changed_paths"' EXIT
+          # Include every commit's paths, even if a later commit reverts a change.
+          git log --format= --name-only -z --no-renames --diff-merges=first-parent "${before}..${AFTER}" > "$changed_paths"
+          git diff --name-only -z --no-renames "$before" "$AFTER" >> "$changed_paths"
+          mapfile -d '' -t paths < "$changed_paths"
+          if (( ${#paths[@]} == 0 )); then
+            echo 'No changed files; no automatic deployment.'
+            echo 'citation_only=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for path in "${paths[@]}"; do
+            case "$path" in
+              data/citations/scholar.json|data/citations/wos.json) ;;
+              *)
+                echo "Non-citation file changed: $path; no automatic deployment."
+                echo 'citation_only=false' >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+          done
+          echo 'Verified citation-only changes.'
+          echo 'citation_only=true' >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -102,8 +173,8 @@ jobs:
           retention-days: 7
 
   deploy:
-    name: Publish only when explicitly requested
-    if: ${{ inputs.deploy == true }}
+    name: Publish verified build
+    if: ${{ needs.build.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.deploy == true) || ((github.event_name == 'push' || github.event_name == 'workflow_run') && needs.build.outputs.citation_only == 'true')) }}
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 10
