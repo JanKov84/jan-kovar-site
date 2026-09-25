@@ -26,10 +26,42 @@ jobs:
             any::jsonlite
             github::frbcesab/rwosstarter
 
+      # TEMPORARY diagnostic: remove after the ScraperAPI A/B result is reviewed.
+      - name: Compare Scholar ScraperAPI responses
+        env:
+          SCRAPERAPI_KEY: ${{ secrets.SCRAPERAPI_KEY }}
+        run: |
+          Rscript -e '
+            suppressPackageStartupMessages(library(rvest))
+            options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+            key <- Sys.getenv("SCRAPERAPI_KEY", unset = "")
+            if (!nzchar(trimws(key))) {
+              message("Scholar A/B diagnostic skipped: SCRAPERAPI_KEY is not set.")
+              quit(status = 0)
+            }
+            fetch_profile <- function(label, scholar_url) {
+              fetch_url <- paste0(
+                "https://api.scraperapi.com?api_key=", utils::URLencode(key, reserved = TRUE),
+                "&url=", utils::URLencode(scholar_url, reserved = TRUE)
+              )
+              tryCatch({
+                doc <- withCallingHandlers(
+                  rvest::read_html(fetch_url),
+                  warning = function(warning) invokeRestart("muffleWarning")
+                )
+                stats <- rvest::html_elements(doc, ".gsc_rsb_std")
+                message(label, ": success; .gsc_rsb_std found=", length(stats) > 0L, "; values=", length(stats))
+              }, error = function(error) {
+                message(label, ": failure")
+              })
+            }
+            fetch_profile("Jan", "https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=en")
+            fetch_profile("Colleague", "https://scholar.google.com/citations?user=sEcbAPUAAAAJ&hl=en&pagesize=100")
+          '
+
       - name: Fetch citation metrics
         env:
           WOS_STARTER_KEY: ${{ secrets.WOS_STARTER_KEY }}
-          SCRAPERAPI_KEY: ${{ secrets.SCRAPERAPI_KEY }}
           CITATION_METRICS_OUTPUT: ${{ runner.temp }}/citation-metrics.json
         run: Rscript scripts/update_citation_metrics.R
 
