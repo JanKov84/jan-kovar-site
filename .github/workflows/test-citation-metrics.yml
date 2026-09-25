@@ -22,36 +22,8 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: |
-            any::rvest
             any::jsonlite
             github::frbcesab/rwosstarter
-
-      # TEMPORARY diagnostic: remove after basic ScraperAPI connectivity is confirmed.
-      - name: Test basic ScraperAPI connectivity
-        env:
-          SCRAPERAPI_KEY: ${{ secrets.SCRAPERAPI_KEY }}
-        run: |
-          Rscript -e '
-            suppressPackageStartupMessages(library(rvest))
-            key <- Sys.getenv("SCRAPERAPI_KEY", unset = "")
-            if (!nzchar(trimws(key))) {
-              message("ScraperAPI basic test: failure")
-              quit(status = 0)
-            }
-            fetch_url <- paste0(
-              "https://api.scraperapi.com?api_key=", utils::URLencode(key, reserved = TRUE),
-              "&url=", utils::URLencode("https://example.com/", reserved = TRUE)
-            )
-            tryCatch({
-              doc <- withCallingHandlers(
-                rvest::read_html(fetch_url),
-                warning = function(warning) invokeRestart("muffleWarning")
-              )
-              message("ScraperAPI basic test: success")
-            }, error = function(error) {
-              message("ScraperAPI basic test: failure")
-            })
-          '
 
       - name: Fetch citation metrics
         env:

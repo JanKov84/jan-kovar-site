@@ -4,70 +4,21 @@
 # not modify Hugo content or templates.
 
 suppressPackageStartupMessages({
-  if (!requireNamespace("rvest", quietly = TRUE)) {
-    stop("Missing dependency: rvest. Install dependencies in the workflow before running this script.")
-  }
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Missing dependency: jsonlite. Install dependencies in the workflow before running this script.")
   }
 })
 
-scholar_url <- "https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=en"
 researcher_id <- "AAJ-5694-2020"
 output_path <- Sys.getenv("CITATION_METRICS_OUTPUT", unset = "citation-metrics.json")
 
 today <- format(Sys.Date(), "%Y-%m-%d")
-
-parse_count <- function(value) {
-  value <- gsub("[^0-9]", "", as.character(value))
-  if (!nzchar(value)) return(NA_real_)
-  as.numeric(value)
-}
 
 h_index <- function(citations) {
   citations <- sort(as.numeric(citations), decreasing = TRUE)
   citations <- citations[is.finite(citations) & citations >= 0]
   if (!length(citations)) return(0L)
   as.integer(max(c(0L, which(citations >= seq_along(citations)))))
-}
-
-fetch_scholar <- function() {
-  key <- Sys.getenv("SCRAPERAPI_KEY", unset = "")
-  if (!nzchar(trimws(key))) {
-    message("Scholar fetch skipped: SCRAPERAPI_KEY is not set.")
-    return(NULL)
-  }
-  message("Fetching Google Scholar metrics through ScraperAPI...")
-  result <- tryCatch({
-    options(HTTPUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-    fetch_url <- paste0(
-      "https://api.scraperapi.com?api_key=", utils::URLencode(key, reserved = TRUE),
-      "&url=", utils::URLencode(scholar_url, reserved = TRUE)
-    )
-    page <- tryCatch(
-      rvest::read_html(fetch_url),
-      error = function(error) stop("ScraperAPI request failed; no Scholar metrics were written.")
-    )
-    text <- paste(rvest::html_text2(page), collapse = " ")
-    if (grepl("captcha|unusual traffic|not a robot|sorry", text, ignore.case = TRUE)) {
-      stop("Google Scholar returned a bot-check or CAPTCHA page.")
-    }
-    stats <- rvest::html_elements(page, css = ".gsc_rsb_std")
-    values <- rvest::html_text2(stats)
-    if (length(values) < 3L) {
-      stop("Google Scholar statistics selectors were not found.")
-    }
-    citations <- parse_count(values[[1L]])
-    h <- parse_count(values[[3L]])
-    if (!is.finite(citations) || !is.finite(h)) {
-      stop("Google Scholar statistics were present but not numeric.")
-    }
-    list(citations = as.integer(citations), h_index = as.integer(h), updated_at = today)
-  }, error = function(error) {
-    message("Scholar fetch skipped: ", conditionMessage(error))
-    NULL
-  })
-  result
 }
 
 fetch_wos <- function() {
@@ -109,8 +60,6 @@ fetch_wos <- function() {
 }
 
 metrics <- list()
-scholar <- fetch_scholar()
-if (!is.null(scholar)) metrics$scholar <- scholar
 wos <- fetch_wos()
 if (!is.null(wos)) metrics$wos <- wos
 
