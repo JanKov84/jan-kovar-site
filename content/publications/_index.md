@@ -5,5 +5,3 @@
 }
 
 My publications are listed newest first.
-
-[Google Scholar](https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=cs)

@@ -4,6 +4,38 @@
     <h1>{{ .Title }}</h1>
     <div class="prose">{{ .Content }}</div>
   </header>
+  {{ $sources := slice
+    (dict "name" "Google Scholar" "url" "https://scholar.google.com/citations?user=IAWEh-4AAAAJ&hl=en" "data" hugo.Data.citations.scholar)
+    (dict "name" "Web of Science" "data" hugo.Data.citations.wos)
+  }}
+  {{ $numberTypes := slice "int" "int8" "int16" "int32" "int64" "uint" "uint8" "uint16" "uint32" "uint64" "float32" "float64" "json.Number" }}
+  {{ $metrics := slice }}
+  {{ range $sources }}
+    {{ $source := . }}
+    {{ with .data }}
+      {{ if and (reflect.IsMap .) (isset . "citations") (isset . "h_index") }}
+        {{ $citations := .citations }}
+        {{ $hIndex := .h_index }}
+        {{ $validCitations := and (in $numberTypes (printf "%T" $citations)) (gt (len (findRE `^(0|[1-9][0-9]*)$` (printf "%v" $citations))) 0) }}
+        {{ $validHIndex := and (in $numberTypes (printf "%T" $hIndex)) (gt (len (findRE `^(0|[1-9][0-9]*)$` (printf "%v" $hIndex))) 0) }}
+        {{ if and $validCitations $validHIndex }}{{ $metrics = $metrics | append $source }}{{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+  {{ with $metrics }}
+  <section class="citation-metrics" aria-labelledby="citation-metrics-title">
+    <h2 id="citation-metrics-title">Citation metrics</h2>
+    <div class="citation-metrics-grid">
+      {{ range . }}
+      <div class="citation-metric">
+        <h3>{{ if .url }}<a href="{{ .url }}">{{ .name }}</a>{{ else }}{{ .name }}{{ end }}</h3>
+        <p>{{ .data.citations }} citations · h-index {{ .data.h_index }}</p>
+        {{ with .data.updated_at }}<p class="citation-updated">Updated <time datetime="{{ . }}">{{ time.Format "02 Jan 2006" . }}</time></p>{{ end }}
+      </div>
+      {{ end }}
+    </div>
+  </section>
+  {{ end }}
   <form class="publication-filters" id="publication-filters" hidden aria-label="Filter publications">
     <div>
       <label for="publication-type">Publication type</label>
