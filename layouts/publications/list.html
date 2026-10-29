@@ -41,7 +41,7 @@
       <label for="publication-type">Publication type</label>
       <select id="publication-type" name="type">
         <option value="">All types</option>
-        {{ range slice "Journal Articles" "Books" "Book Chapters" "Other Research and Policy Publications" "Book Reviews" }}
+        {{ range slice "Journal Articles" "Books" "Book Chapters" "Other Research and Policy Publications" "Datasets" "Book Reviews" }}
         <option value="{{ . }}">{{ . }}</option>
         {{ end }}
       </select>
